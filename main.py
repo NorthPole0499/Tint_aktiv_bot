@@ -14,7 +14,9 @@ bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 id_of_message = 0
-basket_of_items = []
+basket_of_items = [("third_item", 0), ("second_item", 0)]
+current_size = "L"
+num_of_items = 0
 
 
 @dp.message_handler(commands=['start'])
@@ -67,34 +69,47 @@ async def main_menu_call(callback: types.CallbackQuery):
 
 @dp.callback_query_handler(text='first_item')
 async def main_menu_call(callback: types.CallbackQuery):
-    await callback.message.edit_text('Это футболочка!\nА это её описание)',
+    await callback.message.edit_text('Это футболочка!\nА это её описание, осталось лишь выбрать размер.)',
                                      reply_markup=first_item_inkb)
 
 
 @dp.callback_query_handler(text='first_item_s')
 async def main_menu_call(callback: types.CallbackQuery):
-    basket_of_items.append(("first_item", "S"))
-    await callback.message.edit_text('Готово! Айтем добавлен в заказ.\nЧто еще добавим?',
-                                     reply_markup=product_list_inkb)
+    global current_size
+    current_size = "S"
+    await callback.message.edit_text('Добавить в заказ футболочку размером S?',
+                                     reply_markup=first_item_add_inkb)
 
 
 @dp.callback_query_handler(text='first_item_m')
 async def main_menu_call(callback: types.CallbackQuery):
-    basket_of_items.append(("first_item", "M"))
-    await callback.message.edit_text('Готово! Айтем добавлен в заказ.\nЧто еще добавим?',
-                                     reply_markup=product_list_inkb)
+    global current_size
+    current_size = "M"
+    await callback.message.edit_text('Добавить в заказ футболочку размером M?',
+                                     reply_markup=first_item_add_inkb)
 
 
 @dp.callback_query_handler(text='first_item_l')
 async def main_menu_call(callback: types.CallbackQuery):
-    basket_of_items.append(("first_item", "L"))
-    await callback.message.edit_text('Готово! Айтем добавлен в заказ.\nЧто еще добавим?',
-                                     reply_markup=product_list_inkb)
+    global current_size
+    current_size = "L"
+    await callback.message.edit_text('Добавить в заказ футболочку размером L?',
+                                     reply_markup=first_item_add_inkb)
 
 
 @dp.callback_query_handler(text='first_item_xl')
 async def main_menu_call(callback: types.CallbackQuery):
-    basket_of_items.append(("first_item", "XL"))
+    global current_size
+    current_size = "XL"
+    await callback.message.edit_text('Добавить в заказ футболочку размером XL?',
+                                     reply_markup=first_item_add_inkb)
+
+
+@dp.callback_query_handler(text='first_item_add')
+async def main_menu_call(callback: types.CallbackQuery):
+    global num_of_items
+    num_of_items += 1
+    basket_of_items.append(("first_item", current_size))
     await callback.message.edit_text('Готово! Айтем добавлен в заказ.\nЧто еще добавим?',
                                      reply_markup=product_list_inkb)
 
@@ -107,7 +122,9 @@ async def main_menu_call(callback: types.CallbackQuery):
 
 @dp.callback_query_handler(text='second_item_add')
 async def main_menu_call(callback: types.CallbackQuery):
-    basket_of_items.append(("second_item", "-"))
+    global num_of_items
+    num_of_items += 1
+    basket_of_items[1] = (basket_of_items[1][0], basket_of_items[1][1] + 1)
     await callback.message.edit_text('Готово! Айтем добавлен в заказ.\nЧто еще добавим?',
                                      reply_markup=product_list_inkb)
 
@@ -120,9 +137,34 @@ async def main_menu_call(callback: types.CallbackQuery):
 
 @dp.callback_query_handler(text='third_item_add')
 async def main_menu_call(callback: types.CallbackQuery):
-    basket_of_items.append(("third_item", "-"))
+    global num_of_items
+    num_of_items += 1
+    basket_of_items[0] = (basket_of_items[0][0], basket_of_items[0][1] + 1)
     await callback.message.edit_text('Готово! Айтем добавлен в заказ.\nЧто еще добавим?',
                                      reply_markup=product_list_inkb)
+
+
+@dp.callback_query_handler(text='basket')
+async def main_menu_call(callback: types.CallbackQuery):
+    if num_of_items == 0:
+        out_answer = "В вашей корзине пока что пусто!"
+    else:
+        out_answer = "Вот товары, которые находятся в вашей корзине:\n\n"
+        for item in basket_of_items:
+            if item[0] != "first_item":
+                if item[1] != 0:
+                    out_answer += item[0] + " " + str(item[1]) + "шт.\n"
+            else:
+                out_answer += item[0] + " размера " + str(item[1]) + "\n"
+
+    await callback.message.edit_text(out_answer,
+                                     reply_markup=basket_inkb)
+
+
+@dp.callback_query_handler(text='clear_basket')
+async def main_menu_call(callback: types.CallbackQuery):
+    await callback.message.edit_text('В вашей корзине пока что пусто!',
+                                     reply_markup=basket_inkb)
 
 
 if __name__ == '__main__':
