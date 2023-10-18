@@ -34,13 +34,16 @@ first_item_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(
                                                                                 product_list_button)
 
 first_item_add_button = InlineKeyboardButton(text='Добавить в корзину', callback_data='first_item_add')
-first_item_add_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(first_item_add_button)
+first_item_add_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(first_item_add_button,
+                                                                                    product_list_button)
 
 second_item_add_button = InlineKeyboardButton(text='Добавить в корзину', callback_data='second_item_add')
-second_item_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(second_item_add_button)
+second_item_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(second_item_add_button,
+                                                                                 product_list_button)
 
 third_item_add_button = InlineKeyboardButton(text='Добавить в корзину', callback_data='third_item_add')
-third_item_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(third_item_add_button)
+third_item_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(third_item_add_button,
+                                                                                product_list_button)
 
 clear_basket_button = InlineKeyboardButton(text='Очистить корзину', callback_data='clear_basket')
 basket_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(clear_basket_button,

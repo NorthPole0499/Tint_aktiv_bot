@@ -163,8 +163,13 @@ async def main_menu_call(callback: types.CallbackQuery):
 
 @dp.callback_query_handler(text='clear_basket')
 async def main_menu_call(callback: types.CallbackQuery):
-    await callback.message.edit_text('В вашей корзине пока что пусто!',
-                                     reply_markup=basket_inkb)
+    basket_of_items.clear()
+    global num_of_items
+    num_of_items = 0
+    try:
+        await callback.message.edit_text('В вашей корзине пока что пусто!', reply_markup=basket_inkb)
+    except Exception:
+        pass
 
 
 if __name__ == '__main__':
