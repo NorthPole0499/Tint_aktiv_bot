@@ -49,6 +49,6 @@ clear_basket_button = InlineKeyboardButton(text='Очистить корзину
 basket_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(clear_basket_button,
                                                                             main_menu_button)
 
-
-
-
+final_checkout_button = InlineKeyboardButton(text='Оформить заказ', callback_data='final_checkout')
+checkout_inkb = InlineKeyboardMarkup(row_width=1, one_time_keyboard=True).add(final_checkout_button,
+                                                                              main_menu_button)
