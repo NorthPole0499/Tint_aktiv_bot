@@ -3,7 +3,9 @@ from keyboards import *
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import InputFile, InputMedia, InputMediaPhoto
+from aiogram.types import InputFile
+from database import *
+import datetime, csv
 
 
 class MyDialog(StatesGroup):
@@ -54,7 +56,7 @@ async def process_message(message: types.Message, state: FSMContext):
 
     await state.finish()
 
-    # register_db(message.from_user.id, user_message, role_client)
+    register_db(message.from_user.id, user_name, "", 0, 0, message.from_user.username)
 
     await bot.delete_message(message.chat.id, id_of_message)
     await message.delete()
@@ -202,7 +204,10 @@ async def clear_basket(callback: types.CallbackQuery):
 @dp.callback_query_handler(text='checkout')
 async def checkout_call(callback: types.CallbackQuery):
     global cost_basket, user_name
+    user_name = get_name(callback.message.chat.id)
     out_answer = ""
+    db_first_item = ""
+    db_second_item, db_third_item = 0, 0
     await callback.message.delete()
     if cost_basket == 0:
         await callback.message.answer('В вашей корзине пока что пусто! Вы не можете ничего заказать.',
@@ -211,13 +216,21 @@ async def checkout_call(callback: types.CallbackQuery):
         out_answer += "Давай всё проверим!\n"
         out_answer += "Вас зовут " + user_name + "\n\nЗаказ:\n"
         for item in basket_of_items:
-            if item[0] != "first_item":
+            if item[0] == "second_item":
                 if item[1] != 0:
                     out_answer += item[0] + " " + str(item[1]) + " шт.\n"
+                db_second_item = item[1]
+            elif item[0] == "third_item":
+                if item[1] != 0:
+                    out_answer += item[0] + " " + str(item[1]) + " шт.\n"
+                db_third_item = item[1]
             else:
                 out_answer += item[0] + " размера " + str(item[1]) + "\n"
+                db_first_item += str(item[1]) + '_'
 
         out_answer += "\nОбщая стоимость: " + str(cost_basket) + " рублей."
+
+        add_items_db(callback.message.chat.id, db_first_item, db_second_item, db_third_item)
 
         await callback.message.answer(out_answer,
                                          reply_markup=checkout_inkb)
@@ -226,12 +239,11 @@ async def checkout_call(callback: types.CallbackQuery):
 @dp.callback_query_handler(text='final_checkout')
 async def final_checkout(callback: types.CallbackQuery):
     global cost_basket
-    cost_basket = -1
     await callback.message.delete_reply_markup()
-    await callback.message.edit_text("Денюжки переводи вот сюда\n\n +7(952)2812\n\nТвой заказ стоит n руб.\n"
+    await callback.message.edit_text(f"Денюжки переводи вот сюда\n\n +7(952)2812\n\nТвой заказ стоит {cost_basket} руб.\n"
                                      "Обязательно скинь скрин перевода прямо в этот диалог!\nКогда мы все проверим,"
                                      "тебе придет подтверждение. Это может занять до 24 часов")
-    # await MyDialog.checkout.set()
+    cost_basket = -1
 
 
 @dp.message_handler(content_types=['photo', 'document'])
@@ -245,6 +257,17 @@ async def photo_or_doc_handler(message: types.Message):
         await message.answer('Всё готов!\n\nОсталось дождаться подтверждения...', )
     else:
         pass
+
+
+@dp.message_handler(commands=['admin_checkout'])
+async def register(message: types.Message):
+    our_data = get_all()
+    our_data.insert(0, ("tg_id", "name", "first_item", "second_item", "third_item", "username"))
+    print(our_data)
+    name_file = open(f'{datetime.date.today()}.csv', 'w',)
+    with name_file:
+        writer = csv.writer(name_file, delimiter=';')
+        writer.writerows(our_data)
 
 
 if __name__ == '__main__':
