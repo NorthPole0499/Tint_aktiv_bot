@@ -22,6 +22,7 @@ basket_of_items = [("third_item", 0), ("second_item", 0)]
 current_size = "L"
 cost_basket = 0
 user_name = "?"
+admin_id = 1067036017
 
 
 @dp.message_handler(commands=['start'])
@@ -248,12 +249,15 @@ async def final_checkout(callback: types.CallbackQuery):
 
 @dp.message_handler(content_types=['photo', 'document'])
 async def photo_or_doc_handler(message: types.Message):
-    global cost_basket
+    global cost_basket, admin_id
     if cost_basket == -1:
+        name_file = message.from_user.username
         if message.content_type == 'photo':
-            await message.photo[-1].download(destination_file="1.jpg")
+            await message.photo[-1].download(destination_file=f"user_photos/{name_file}.jpg")
+            await bot.send_photo(admin_id, InputFile(f"user_photos/{name_file}.jpg"), caption=name_file)
         elif message.content_type == 'document':
-            await message.document.download(destination_file="1.jpg")
+            await message.document.download(destination_file=f"user_photos/{name_file}.jpg")
+            await bot.send_document(admin_id, InputFile(f"user_photos/{name_file}.jpg"), caption=name_file)
         await message.answer('Всё готов!\n\nОсталось дождаться подтверждения...', )
     else:
         pass
@@ -261,13 +265,20 @@ async def photo_or_doc_handler(message: types.Message):
 
 @dp.message_handler(commands=['admin_checkout'])
 async def register(message: types.Message):
-    our_data = get_all()
-    our_data.insert(0, ("tg_id", "name", "first_item", "second_item", "third_item", "username"))
-    print(our_data)
-    name_file = open(f'{datetime.date.today()}.csv', 'w',)
-    with name_file:
-        writer = csv.writer(name_file, delimiter=';')
-        writer.writerows(our_data)
+    global admin_id
+    if message.from_user.id == admin_id:
+        our_data = get_all()
+        our_data.insert(0, ("tg_id", "name", "first_item", "second_item", "third_item", "username"))
+
+        naming_file = str(datetime.datetime.now()).split(' ')
+        naming_file[1] = naming_file[1].replace(':', '-')
+        final_name = naming_file[0] + "_" + naming_file[1][:-7]
+        name_file = open(f'checkouts/{final_name}.csv', 'w', newline='')
+        with name_file:
+            writer = csv.writer(name_file, delimiter=';', lineterminator='\n')
+            writer.writerows(our_data)
+
+        await bot.send_document(1067036017, open(f'checkouts/{final_name}.csv', 'r'))
 
 
 if __name__ == '__main__':
