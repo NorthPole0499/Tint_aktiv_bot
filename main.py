@@ -57,7 +57,7 @@ async def process_message(message: types.Message, state: FSMContext):
 
     await state.finish()
 
-    register_db(message.from_user.id, user_name, "", 0, 0, message.from_user.username)
+    register_db(message.from_user.id, user_name, "", 0, 0, message.from_user.username, 0, 0)
 
     await bot.delete_message(message.chat.id, id_of_message)
     await message.delete()
@@ -259,16 +259,19 @@ async def photo_or_doc_handler(message: types.Message):
             await message.document.download(destination_file=f"user_photos/{name_file}.jpg")
             await bot.send_document(admin_id, InputFile(f"user_photos/{name_file}.jpg"), caption=name_file)
         await message.answer('Всё готов!\n\nОсталось дождаться подтверждения...', )
+
+        add_first_checkout_db(message.from_user.id, 1)
     else:
         pass
 
 
 @dp.message_handler(commands=['admin_checkout'])
-async def register(message: types.Message):
+async def admin_checkout(message: types.Message):
     global admin_id
     if message.from_user.id == admin_id:
         our_data = get_all()
-        our_data.insert(0, ("tg_id", "name", "first_item", "second_item", "third_item", "username"))
+        our_data.insert(0, ("tg_id", "name", "first_item", "second_item", "third_item", "username", "first_checkout",
+                            "second_checkout"))
 
         naming_file = str(datetime.datetime.now()).split(' ')
         naming_file[1] = naming_file[1].replace(':', '-')
@@ -278,8 +281,17 @@ async def register(message: types.Message):
             writer = csv.writer(name_file, delimiter=';', lineterminator='\n')
             writer.writerows(our_data)
 
-        await bot.send_document(1067036017, open(f'checkouts/{final_name}.csv', 'r'))
+        await bot.send_document(admin_id, open(f'checkouts/{final_name}.csv', 'r'))
 
+
+@dp.message_handler(commands=['final_checkout'])
+async def final_checkout(message: types.Message):
+    username = message.get_args()
+    user_id = get_user_id(username)
+
+    await bot.send_message(user_id, "Твой заказ подтверждён!\nНапиши @kather1na, чтобы забрать свой мерч.")
+
+    add_second_checkout_db(user_id, 1)
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
